@@ -117,20 +117,20 @@ def main():
     print(f"Accuracy before pruning: {acc * 100} %")
 
     # Save model before pruning
-    torch.save(model.state_dict(), './results/model_before_pruning.pth')
-    torch.save(optimizer.state_dict(), './results/optimizer_before_pruning.pth')
+    torch.save(model.state_dict(), './results/iris/model_before_pruning.pth')
+    torch.save(optimizer.state_dict(), './results/iris/optimizer_before_pruning.pth')
 
     pruning(model, 6)
 
     # Save model after pruning
-    torch.save(model.state_dict(), './results/model_after_pruning.pth')
-    torch.save(optimizer.state_dict(), './results/optimizer_after_pruning.pth')
+    torch.save(model.state_dict(), './results/iris/model_after_pruning.pth')
+    torch.save(optimizer.state_dict(), './results/iris/optimizer_after_pruning.pth')
 
     _, acc, _ = test(model, X_test_data=X_test_tensor, y_test_data=y_test_tensor)
     print(f"Accuracy after pruning: {acc * 100} %")
 
-    size_before_pruning = os.path.getsize("./results/model_before_pruning.pth")
-    size_after_pruning = os.path.getsize("./results/model_after_pruning.pth")
+    size_before_pruning = os.path.getsize("./results/iris/model_before_pruning.pth")
+    size_after_pruning = os.path.getsize("./results/iris/model_after_pruning.pth")
 
     print(f"Size before pruning = {size_before_pruning}\n"
           f"Size after pruning = {size_after_pruning}\n"
