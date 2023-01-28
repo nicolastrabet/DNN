@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -127,24 +129,29 @@ def main():
     _, acc, _ = test(model, X_test_data=X_test_tensor, y_test_data=y_test_tensor)
     print(f"Accuracy after pruning: {acc * 100} %")
 
-    show_graphes = True
-    if show_graphes:
-        # Afficher les courbes accuracy et de loss
-        plt.figure()
-        plt.plot(train_losses, label='Training Loss', color='blue')
-        plt.plot(validation, label='Validation Loss', color='red')
-        plt.title('Evolution de la validation et du training', color='orange')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
+    size_before_pruning = os.path.getsize("./results/model_before_pruning.pth")
+    size_after_pruning = os.path.getsize("./results/model_after_pruning.pth")
 
-        plt.figure()
-        plt.plot(train_accuracies)
-        plt.xlabel('Epoque')
-        plt.ylabel('Accuracy')
-        plt.title('Evolution de l\'accuracy', color='orange')
-        plt.show()
+    print(f"Size before pruning = {size_before_pruning}\n"
+          f"Size after pruning = {size_after_pruning}\n"
+          f"Différence = {size_before_pruning-size_after_pruning}")
+
+    # Afficher les courbes accuracy et de loss
+    plt.figure()
+    plt.plot(train_losses, label='Training Loss', color='blue')
+    plt.plot(validation, label='Validation Loss', color='red')
+    plt.title('Evolution de la validation et du training', color='orange')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+    plt.figure()
+    plt.plot(train_accuracies)
+    plt.xlabel('Epoque')
+    plt.ylabel('Accuracy')
+    plt.title('Evolution de l\'accuracy', color='orange')
+    plt.show()
 
 
 if __name__ == '__main__':
