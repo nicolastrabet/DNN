@@ -1,5 +1,3 @@
-import time
-
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -25,13 +23,9 @@ class Net(nn.Module):
         return x
 
 
-def train(model, device, X_train_data, y_train_data, optimizer, epoch):
+def train(model, X_train_data, y_train_data, optimizer, epoch):
     criterion = nn.CrossEntropyLoss()
     model.train()
-
-    # TODO:
-    # X_train_data.to(device)
-    # y_train_data.to(device)
 
     # Propager les données d'entraînement à travers le modèle
     y_pred = model(X_train_data)
@@ -52,33 +46,34 @@ def test(model, X_test_data, y_test_data):
     # y_pred = model(X_test_data)
     # loss = criterion(y_pred, y_test_data)
 
-
-
     # Validation
     y_val_pred = model(X_test_data)
     val_loss = criterion(y_val_pred, y_test_data)
 
     accuracy = (y_val_pred.argmax(1) == y_test_data).float().mean()
+    # print(accuracy)
 
     return val_loss.item(), accuracy.item(), val_loss.item()
-
     # Stocker les métriques d'entraînement pour cette époque
     # train_losses.append(loss.item())
     # train_accuracies.append(accuracy.item())
     # validation.append(val_loss.item())
 
 
-def main():
-    # Device setup
-    use_cuda = torch.cuda.is_available()
-    use_mps = torch.backends.mps.is_available()
-    if use_cuda:
-        device = torch.device("cuda")
-    elif use_mps:
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+def pruning(model, nb):
+    weights = model.fc1.weight
+    bias = model.fc1.bias
+    coefs = model.fc2.weight[0]
 
+    # Premier calcul de la matrice de saliency
+    matrix_saliency = get_matrix_saliency(weights, bias, coefs)
+
+    # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
+    for _ in range(nb):
+        matrix_saliency = update_model_and_saliency_matrix(model, matrix_saliency)
+
+
+def main():
     # Datasets
     iris_data = load_iris()
     X = iris_data.data
@@ -91,8 +86,7 @@ def main():
     X_test_tensor = torch.from_numpy(X_test).float()
     y_test_tensor = torch.from_numpy(y_test).long()
 
-    # TODO
-    # model = Net().to(device)
+    # Model
     model = Net()
 
     # Définir l'optimiseur et la fonction de coût
@@ -105,11 +99,9 @@ def main():
     validation = []
 
     # Entraîner le modèle
-    time0 = time.time()
     for epoch in range(1000):
         train(model=model,
               X_train_data=X_train_tensor,
-              device=device,
               y_train_data=y_train_tensor,
               optimizer=optimizer,
               epoch=epoch
@@ -119,22 +111,21 @@ def main():
         train_accuracies.append(train_accuracy)
         validation.append(vali)
 
-    weights = model.fc1.weight
-    bias = model.fc1.bias
-    coefs = model.fc2.weight[0]
+    _, acc, _ = test(model, X_test_data=X_test_tensor, y_test_data=y_test_tensor)
+    print(f"Accuracy before pruning: {acc * 100} %")
 
-    # Premier calcul de la matrice de saliency
-    matrix_saliency = get_matrix_saliency(weights, bias, coefs)
+    # Save model before pruning
+    torch.save(model.state_dict(), './results/model_before_pruning.pth')
+    torch.save(optimizer.state_dict(), './results/optimizer_before_pruning.pth')
 
-    # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
-    for _ in range(10):
-        matrix_saliency = update_model_and_saliency_matrix(model, matrix_saliency)
+    pruning(model, 6)
 
-    y_pred = model(X_train_tensor)
-    accuracy = (y_pred.argmax(1) == y_train_tensor).float().mean()
-    print(f"Accuracy: {accuracy}")
+    # Save model after pruning
+    torch.save(model.state_dict(), './results/model_after_pruning.pth')
+    torch.save(optimizer.state_dict(), './results/optimizer_after_pruning.pth')
 
-    time1 = time.time()
+    _, acc, _ = test(model, X_test_data=X_test_tensor, y_test_data=y_test_tensor)
+    print(f"Accuracy after pruning: {acc * 100} %")
 
     show_graphes = True
     if show_graphes:
@@ -154,8 +145,6 @@ def main():
         plt.ylabel('Accuracy')
         plt.title('Evolution de l\'accuracy', color='orange')
         plt.show()
-
-    print("Nous avons donc un temps de:", time1 - time0)
 
 
 if __name__ == '__main__':
