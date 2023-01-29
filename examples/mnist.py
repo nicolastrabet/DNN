@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torchvision import datasets, transforms
 
-from src.paper import get_matrix_saliency, update_model_and_saliency_matrix
+from src.paper import pruning
 from src.utils import human_bytes
 
 
@@ -76,19 +76,6 @@ def test(model, device, test_loader):
         100. * correct / len(test_loader.dataset)))
 
 
-def pruning(model, nb):
-    weights = model.fc1.weight
-    bias = model.fc1.bias
-    coefs = model.fc2.weight[0]
-
-    # Premier calcul de la matrice de saliency
-    matrix_saliency = get_matrix_saliency(weights, bias, coefs)
-
-    # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
-    for _ in range(nb):
-        matrix_saliency = update_model_and_saliency_matrix(model, matrix_saliency)
-
-
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
@@ -126,7 +113,7 @@ def main():
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
-    # device = torch.device("cpu")
+    device = torch.device("cpu")
 
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
@@ -141,10 +128,9 @@ def main():
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
-    dataset1 = datasets.MNIST('../data', train=True, download=True,
-                              transform=transform)
-    dataset2 = datasets.MNIST('../data', train=False,
-                              transform=transform)
+    dataset1 = datasets.MNIST('../data', train=True, download=True, transform=transform)
+    dataset2 = datasets.MNIST('../data', train=False, transform=transform)
+
     train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
@@ -163,11 +149,12 @@ def main():
     torch.save(model.state_dict(), './results/mnist/model_before_pruning.pth')
     torch.save(optimizer.state_dict(), './results/mnist/optimizer_before_pruning.pth')
 
-    pruning(model, 40)
+    pruning(model, 6, "conv2", "fc1")
 
     print("Acc AP:\n")
+    model.to(device)
     # BUG ICI TODO
-    # test(model, device, test_loader)
+    test(model, device, test_loader)
 
     # Save model after pruning
     torch.save(model.state_dict(), './results/mnist/model_after_pruning.pth')
