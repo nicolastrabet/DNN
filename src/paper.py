@@ -54,7 +54,7 @@ def update_model_and_saliency_matrix(model, saliency_matrix):
             new_fc2 = torch.cat(
                 (new_fc2, torch.cat((model.fc2.weight.data[nb][:j], model.fc2.weight.data[nb][j + 1:]))))
 
-    model.fc2.weight.data = torch.reshape(new_fc2, [5, int(int(len(new_fc2)) / 5)])
+    model.fc2.weight.data = torch.reshape(new_fc2, [10, int(int(len(new_fc2)) / 10)])
 
     # Update the saliency matrix by removing the j-th column and row
     saliency_matrix = torch.cat((saliency_matrix[:i], saliency_matrix[i + 1:]))
@@ -101,7 +101,7 @@ def update_model_and_saliency_matrix_with_param(model, saliency_matrix, name1, n
             new_fc2 = torch.cat(
                 (new_fc2, torch.cat((layer_obj_2.weight.data[nb][:j], layer_obj_2.weight.data[nb][j + 1:]))))
 
-    layer_obj_2.weight.data = torch.reshape(new_fc2, [5, int(int(len(new_fc2)) / 5)])
+    layer_obj_2.weight.data = torch.reshape(new_fc2, [10, int(int(len(new_fc2)) / 10)])
 
     # Update the saliency matrix by removing the j-th column and row
     saliency_matrix = torch.cat((saliency_matrix[:i], saliency_matrix[i + 1:]))
@@ -135,8 +135,8 @@ def get_saliency_smallest_id(weights, bias, coefs):
                     lowest_saliency_indices = (i, j)
     return lowest_saliency_indices
 
-def pruning(model, nb, name1, name2):
 
+def pruning(model, nb, name1, name2):
     layer_obj_1 = getattr(model, name1)
     layer_obj_2 = getattr(model, name2)
 
