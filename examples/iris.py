@@ -7,7 +7,7 @@ import torch.optim as optim
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
-from src.paper import get_matrix_saliency, update_model_and_saliency_matrix
+from src.paper import pruning
 
 
 # Définir l'architecture du modèle
@@ -62,19 +62,6 @@ def test(model, X_test_data, y_test_data):
     # validation.append(val_loss.item())
 
 
-def pruning(model, nb):
-    weights = model.fc1.weight
-    bias = model.fc1.bias
-    coefs = model.fc2.weight[0]
-
-    # Premier calcul de la matrice de saliency
-    matrix_saliency = get_matrix_saliency(weights, bias, coefs)
-
-    # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
-    for _ in range(nb):
-        matrix_saliency = update_model_and_saliency_matrix(model, matrix_saliency)
-
-
 def main():
     # Datasets
     iris_data = load_iris()
@@ -120,7 +107,7 @@ def main():
     torch.save(model.state_dict(), './results/iris/model_before_pruning.pth')
     torch.save(optimizer.state_dict(), './results/iris/optimizer_before_pruning.pth')
 
-    pruning(model, 6)
+    pruning(model, 6, "fc1", "fc2")
 
     # Save model after pruning
     torch.save(model.state_dict(), './results/iris/model_after_pruning.pth')
