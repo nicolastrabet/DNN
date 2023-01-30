@@ -1,4 +1,9 @@
+import os
+import time
 import torch
+from matplotlib import pyplot as plt
+
+from src.utils import test
 
 
 def calculate_saliency(weight_i, bias_i, weight_j, bias_j, coef_j):
@@ -135,8 +140,19 @@ def get_saliency_smallest_id(weights, bias, coefs):
                     lowest_saliency_indices = (i, j)
     return lowest_saliency_indices
 
+def plot_accuracy_vs_neurons_pruned(accuracy, neurons_pruned):
+    plt.plot(neurons_pruned, accuracy)
+    plt.xlabel('Number of Neurons Pruned')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs Number of Neurons Pruned')
+    plt.show()
 
-def pruning(model, nb, name1, name2):
+def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False):
+    time0 = time.time()
+    neurones_pruned = [i for i in range(50, nb + 1, 50)]
+    accuracy = []
+    pruning_durations = []
+    Compression = []
     layer_obj_1 = getattr(model, name1)
     layer_obj_2 = getattr(model, name2)
 
@@ -148,5 +164,25 @@ def pruning(model, nb, name1, name2):
     matrix_saliency = get_matrix_saliency(weights, bias, coefs)
 
     # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
-    for _ in range(nb):
+    for i in range(nb + 1):
         matrix_saliency = update_model_and_saliency_matrix_with_param(model, matrix_saliency, name1, name2)
+        if i in neurones_pruned and plot:
+            time1 = time.time()
+            model.to(device)
+            acc, loss = test(model, device, test_loader)
+            accuracy.append(acc)
+            pruning_durations.append(time1 - time0)
+            # Save model after pruning
+            torch.save(model.state_dict(), './results/mnist/model_after_pruning.pth')
+            torch.save(optimizer.state_dict(), './results/mnist/optimizer_after_pruning.pth')
+            size_before_pruning = os.path.getsize("./results/mnist/model_before_pruning.pth")
+            size_after_pruning = os.path.getsize("./results/mnist/model_after_pruning.pth")
+            compression = size_before_pruning / size_after_pruning
+            Compression.append(compression)
+            print(f"Number of pruned neurons: {i}")
+            print(f"Time for the pruning : {round(time1 - time0)} secondes")
+            print(f"Accuracy after pruning: {acc} (loss {loss})\n")
+            print(f"Compression : {compression}")
+
+    print("coucou")
+    return accuracy, neurones_pruned,pruning_durations, Compression

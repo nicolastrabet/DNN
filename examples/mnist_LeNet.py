@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import matplotlib.pyplot as plt
 import os
 import time
 
@@ -70,6 +71,14 @@ def test(model, device, test_loader):
     return accu, test_loss
 
 
+def plot_accuracy_vs_neurons_pruned(accuracy, neurons_pruned):
+    plt.plot(neurons_pruned, accuracy)
+    plt.xlabel('Number of Neurons Pruned')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs Number of Neurons Pruned')
+    plt.show()
+
+
 def main():
     # Training settings
     batch_size = 64
@@ -121,22 +130,26 @@ def main():
     torch.save(model.state_dict(), './results/mnist/model_before_pruning.pth')
     torch.save(optimizer.state_dict(), './results/mnist/optimizer_before_pruning.pth')
 
-    time0 = time.time()
-    pruning(model, 400, "fc1", "fc2")
-    time1 = time.time()
+    accuracy, neurones_pruned, pruning_durations, Compression = pruning(model, 400, "fc1", "fc2", device, optimizer,
+                                                                        test_loader, plot=True)
+    plot_accuracy_vs_neurons_pruned(accuracy, neurones_pruned)
 
-    print(f"Time for the pruning : {round(time1 - time0)} secondes")
-
-    model.to(device)
-    acc, loss = test(model, device, test_loader)
-    print(f"Accuracy after pruning: {acc} (loss {loss})\n")
-
-    # Save model after pruning
-    torch.save(model.state_dict(), './results/mnist/model_after_pruning.pth')
-    torch.save(optimizer.state_dict(), './results/mnist/optimizer_after_pruning.pth')
-
-    size_before_pruning = os.path.getsize("./results/mnist/model_before_pruning.pth")
-    size_after_pruning = os.path.getsize("./results/mnist/model_after_pruning.pth")
+    # for n in neurones_pruned:
+    #     time0 = time.time()
+    #     pruning(model, n, "fc1", "fc2", device, optimizer, test_loader, plot=True)
+    #     time1 = time.time()
+    #     print(f"Time for the pruning : {round(time1 - time0)} secondes")
+    #     model.to(device)
+    #     acc, loss = test(model, device, test_loader)
+    #     print(f"Accuracy after pruning: {acc} (loss {loss})\n")
+    #     accuracy.append(acc)
+    #     pruning_durations.append(time1 - time0)
+    #     # Save model after pruning
+    #     torch.save(model.state_dict(), './results/mnist/model_after_pruning.pth')
+    #     torch.save(optimizer.state_dict(), './results/mnist/optimizer_after_pruning.pth')
+    #     size_before_pruning = os.path.getsize("./results/mnist/model_before_pruning.pth")
+    #     size_after_pruning = os.path.getsize("./results/mnist/model_after_pruning.pth")
+    #     Compression.append(size_before_pruning / size_after_pruning)
 
     print(f"Size before pruning = {human_bytes(size_before_pruning)}\n"
           f"Size after pruning = {human_bytes(size_after_pruning)}\n"
