@@ -2,7 +2,7 @@ import os
 import time
 import torch
 from matplotlib import pyplot as plt
-
+from src.utils import human_bytes
 from src.utils import test
 
 
@@ -182,7 +182,9 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
             print(f"Number of pruned neurons: {i}")
             print(f"Time for the pruning : {round(time1 - time0)} secondes")
             print(f"Accuracy after pruning: {acc} (loss {loss})\n")
-            print(f"Compression : {compression}")
+            print(f"Compression : {compression}%")
+            print(f"Size before pruning = {human_bytes(size_before_pruning)}\n"
+                  f"Size after pruning = {human_bytes(size_after_pruning)}\n"
+                  f"Différence = {human_bytes(size_before_pruning - size_after_pruning)}")
 
-    print("coucou")
     return accuracy, neurones_pruned,pruning_durations, Compression

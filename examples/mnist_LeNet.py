@@ -12,7 +12,6 @@ from torch.optim.lr_scheduler import StepLR
 from torchvision import datasets, transforms
 
 from src.paper import pruning
-from src.utils import human_bytes
 
 
 class LeNet(nn.Module):
@@ -150,10 +149,6 @@ def main():
     #     size_before_pruning = os.path.getsize("./results/mnist/model_before_pruning.pth")
     #     size_after_pruning = os.path.getsize("./results/mnist/model_after_pruning.pth")
     #     Compression.append(size_before_pruning / size_after_pruning)
-
-    print(f"Size before pruning = {human_bytes(size_before_pruning)}\n"
-          f"Size after pruning = {human_bytes(size_after_pruning)}\n"
-          f"Différence = {human_bytes(size_before_pruning - size_after_pruning)}")
 
 
 if __name__ == '__main__':
