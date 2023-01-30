@@ -1,7 +1,9 @@
 import os
 import time
+
 import torch
 from matplotlib import pyplot as plt
+
 from src.utils import human_bytes
 from src.utils import test
 
@@ -45,7 +47,7 @@ def update_model_and_saliency_matrix(model, saliency_matrix):
 
     weights = model.fc1.weight
     bias = model.fc1.bias
-    coefs = model.fc2.weight[0]
+    coefs = torch.mean(model.fc2.weight.data, dim=0)
 
     model.fc1.weight.data = torch.cat((weights[:j], weights[j + 1:]))
     model.fc1.bias.data = torch.cat((bias[:j], bias[j + 1:]))
@@ -67,7 +69,7 @@ def update_model_and_saliency_matrix(model, saliency_matrix):
 
     weights = model.fc1.weight
     bias = model.fc1.bias
-    coefs = model.fc2.weight[0]
+    coefs = torch.mean(model.fc2.weight.data, dim=0)
 
     # Update the saliency values for the remaining weight pairs
     for k in range(saliency_matrix.shape[0]):
@@ -92,7 +94,7 @@ def update_model_and_saliency_matrix_with_param(model, saliency_matrix, name1, n
 
     weights = layer_obj_1.weight
     bias = layer_obj_1.bias
-    coefs = layer_obj_2.weight[0]
+    coefs = torch.mean(layer_obj_2.weight.data, dim=0)
 
     layer_obj_1.weight.data = torch.cat((weights[:j], weights[j + 1:]))
     layer_obj_1.bias.data = torch.cat((bias[:j], bias[j + 1:]))
@@ -114,7 +116,7 @@ def update_model_and_saliency_matrix_with_param(model, saliency_matrix, name1, n
 
     weights = layer_obj_1.weight
     bias = layer_obj_1.bias
-    coefs = layer_obj_2.weight[0]
+    coefs = torch.mean(layer_obj_2.weight.data, dim=0)
 
     # Update the saliency values for the remaining weight pairs
     for k in range(saliency_matrix.shape[0]):
@@ -140,12 +142,14 @@ def get_saliency_smallest_id(weights, bias, coefs):
                     lowest_saliency_indices = (i, j)
     return lowest_saliency_indices
 
+
 def plot_accuracy_vs_neurons_pruned(accuracy, neurons_pruned):
     plt.plot(neurons_pruned, accuracy)
     plt.xlabel('Number of Neurons Pruned')
     plt.ylabel('Accuracy')
     plt.title('Accuracy vs Number of Neurons Pruned')
     plt.show()
+
 
 def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False):
     time0 = time.time()
@@ -158,12 +162,12 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
 
     weights = layer_obj_1.weight
     bias = layer_obj_1.bias
-    coefs = layer_obj_2.weight[0]
+    coefs = torch.mean(layer_obj_2.weight.data, dim=0)
 
     # Premier calcul de la matrice de saliency
     matrix_saliency = get_matrix_saliency(weights, bias, coefs)
 
-    # Le prunning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
+    # Le pruning commence. Il suffit d'appeler autant de fois cette fonction que l'on veut :)
     for i in range(nb + 1):
         matrix_saliency = update_model_and_saliency_matrix_with_param(model, matrix_saliency, name1, name2)
         if i in neurones_pruned and plot:
@@ -172,6 +176,7 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
             acc, loss = test(model, device, test_loader)
             accuracy.append(acc)
             pruning_durations.append(time1 - time0)
+
             # Save model after pruning
             torch.save(model.state_dict(), './results/mnist/model_after_pruning.pth')
             torch.save(optimizer.state_dict(), './results/mnist/optimizer_after_pruning.pth')
@@ -182,9 +187,9 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
             print(f"Number of pruned neurons: {i}")
             print(f"Time for the pruning : {round(time1 - time0)} secondes")
             print(f"Accuracy after pruning: {acc} (loss {loss})\n")
-            print(f"Compression : {compression}%")
+            print(f"Compression : {compression}")
             print(f"Size before pruning = {human_bytes(size_before_pruning)}\n"
                   f"Size after pruning = {human_bytes(size_after_pruning)}\n"
                   f"Différence = {human_bytes(size_before_pruning - size_after_pruning)}")
 
-    return accuracy, neurones_pruned,pruning_durations, compressions
+    return accuracy, neurones_pruned, pruning_durations, compressions

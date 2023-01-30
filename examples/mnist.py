@@ -125,7 +125,7 @@ def main():
     torch.save(optimizer.state_dict(), './results/mnist/optimizer_before_pruning.pth')
 
     time0 = time.time()
-    pruning(model, 100, "fc1", "fc2")
+    pruning(model, 100, "fc1", "fc2", device, optimizer, test_loader, plot=True)
     time1 = time.time()
 
     print(f"Time for the pruning : {round(time1 - time0)} secondes")
