@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+from prettytable import PrettyTable
 import matplotlib.pyplot as plt
 import os
 import time
@@ -129,10 +129,15 @@ def main():
     torch.save(model.state_dict(), './results/mnist/model_before_pruning.pth')
     torch.save(optimizer.state_dict(), './results/mnist/optimizer_before_pruning.pth')
 
-    accuracy, neurones_pruned, pruning_durations, Compression = pruning(model, 400, "fc1", "fc2", device, optimizer,
+    accuracy, neurones_pruned, pruning_durations, compression = pruning(model, 400, "fc1", "fc2", device, optimizer,
                                                                         test_loader, plot=True)
     plot_accuracy_vs_neurons_pruned(accuracy, neurones_pruned)
 
+    x = PrettyTable()
+    x.field_names = ["Neurones pruned", "Accuracy", "Pruning durations", "Compression"]
+    for i in range(len(accuracy)):
+        x.add_row([neurones_pruned[i], accuracy[i], pruning_durations[i], compression[i]])
+    print(x)
     # for n in neurones_pruned:
     #     time0 = time.time()
     #     pruning(model, n, "fc1", "fc2", device, optimizer, test_loader, plot=True)

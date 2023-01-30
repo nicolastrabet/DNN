@@ -152,7 +152,7 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
     neurones_pruned = [i for i in range(50, nb + 1, 50)]
     accuracy = []
     pruning_durations = []
-    Compression = []
+    compressions = []
     layer_obj_1 = getattr(model, name1)
     layer_obj_2 = getattr(model, name2)
 
@@ -178,7 +178,7 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
             size_before_pruning = os.path.getsize("./results/mnist/model_before_pruning.pth")
             size_after_pruning = os.path.getsize("./results/mnist/model_after_pruning.pth")
             compression = size_before_pruning / size_after_pruning
-            Compression.append(compression)
+            compressions.append(compression)
             print(f"Number of pruned neurons: {i}")
             print(f"Time for the pruning : {round(time1 - time0)} secondes")
             print(f"Accuracy after pruning: {acc} (loss {loss})\n")
@@ -187,4 +187,4 @@ def pruning(model, nb, name1, name2, device, optimizer, test_loader, plot=False)
                   f"Size after pruning = {human_bytes(size_after_pruning)}\n"
                   f"Différence = {human_bytes(size_before_pruning - size_after_pruning)}")
 
-    return accuracy, neurones_pruned,pruning_durations, Compression
+    return accuracy, neurones_pruned,pruning_durations, compressions
